@@ -1,0 +1,9 @@
+model,target,size_kb,size_limit_kb,size_ok,latency_ms,latency_limit_ms,latency_ok,process_mem_mb,process_mem_fit,model_mem_kb,model_mem_fit,fit_as_python_process,fit_if_ported
+LogisticRegression,Cloud,1.03,512000,yes,0.0306,100,yes,92.4,yes,1.03,yes,yes,yes
+LogisticRegression,Edge,1.03,51200,yes,0.0306,50,yes,92.4,yes,1.03,yes,yes,yes
+LogisticRegression,Mobile,1.03,10240,yes,0.0306,20,yes,92.4,conditional,1.03,yes,conditional,yes
+LogisticRegression,TinyML,1.03,100,yes,0.0306,10,yes,92.4,no,1.03,yes,no,yes
+RandomForest,Cloud,284.07,512000,yes,2.6996,100,yes,99.5,yes,284.07,yes,yes,yes
+RandomForest,Edge,284.07,51200,yes,2.6996,50,yes,99.5,yes,284.07,yes,yes,yes
+RandomForest,Mobile,284.07,10240,yes,2.6996,20,yes,99.5,conditional,284.07,yes,conditional,yes
+RandomForest,TinyML,284.07,100,no,2.6996,10,yes,99.5,no,284.07,no,no,no

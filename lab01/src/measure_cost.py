@@ -3,7 +3,8 @@
 For each model:
   - training time: 1 warm-up fit, then median of 5 timed fits
   - single-sample inference latency: 1 warm-up, then median of 100 timed predictions
-  - model size: joblib.dump to results/, size in bytes and KB
+  - model size: joblib.dump to results/model.joblib, size in bytes and KB
+    (model.joblib ends up holding the last model; per-model copies are kept)
   - peak memory (RSS) during training and during inference, via memory_profiler
   - memory of a minimal inference process (fresh Python, no torch), median of 5 runs
 
@@ -12,6 +13,7 @@ Usage (from repo root):
 """
 import csv
 import json
+import shutil
 import statistics
 import subprocess
 import sys
@@ -91,9 +93,12 @@ def main():
         model, train_times = time_training(name, X_train, y_train)
         infer_times = time_inference(model, x_one)
 
+        # As in the manual: dump to results/model.joblib and record its size.
+        # Each model overwrites it in turn, so a per-model copy is kept too.
+        joblib.dump(model, RESULTS_DIR / "model.joblib")
+        size_bytes = (RESULTS_DIR / "model.joblib").stat().st_size
         model_path = RESULTS_DIR / f"model_{name}.joblib"
-        joblib.dump(model, model_path)
-        size_bytes = model_path.stat().st_size
+        shutil.copyfile(RESULTS_DIR / "model.joblib", model_path)
 
         train_base, train_peak = peak_memory(make_models()[name].fit, X_train, y_train)
         infer_base, infer_peak = peak_memory(predict_many, model, x_one)
