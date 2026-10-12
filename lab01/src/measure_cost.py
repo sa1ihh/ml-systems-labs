@@ -5,6 +5,7 @@ For each model:
   - single-sample inference latency: 1 warm-up, then median of 100 timed predictions
   - model size: joblib.dump to results/, size in bytes and KB
   - peak memory (RSS) during training and during inference, via memory_profiler
+  - memory of a minimal inference process (fresh Python, no torch), median of 5 runs
 
 Usage (from repo root):
     python lab01/src/measure_cost.py
@@ -12,7 +13,10 @@ Usage (from repo root):
 import csv
 import json
 import statistics
+import subprocess
+import sys
 import time
+from pathlib import Path
 
 import joblib
 import psutil
@@ -22,7 +26,9 @@ from common import RESULTS_DIR, load_split, make_models, set_seeds
 
 TRAIN_REPEATS = 5
 INFER_REPEATS = 100
+DEPLOY_REPEATS = 5
 MEM_INTERVAL_S = 0.001  # memory_profiler sampling interval
+PROBE = Path(__file__).with_name("deploy_probe.py")
 
 
 def rss_mb() -> float:
@@ -63,6 +69,17 @@ def predict_many(model, x_one):
         model.predict(x_one)
 
 
+def deploy_memory(model_path, x_one):
+    """Median memory of DEPLOY_REPEATS fresh inference-only processes."""
+    values = ",".join(repr(float(v)) for v in x_one.ravel())
+    runs = []
+    for _ in range(DEPLOY_REPEATS):
+        out = subprocess.run([sys.executable, "-W", "ignore", str(PROBE), str(model_path), values],
+                             capture_output=True, text=True, check=True).stdout
+        runs.append(json.loads(out))
+    return {key: statistics.median(r[key] for r in runs) for key in runs[0]}
+
+
 def main():
     set_seeds()
     X_train, X_test, y_train, _ = load_split()
@@ -80,6 +97,7 @@ def main():
 
         train_base, train_peak = peak_memory(make_models()[name].fit, X_train, y_train)
         infer_base, infer_peak = peak_memory(predict_many, model, x_one)
+        deploy = deploy_memory(model_path, x_one)
 
         row = {
             "model": name,
@@ -92,6 +110,9 @@ def main():
             "peak_rss_infer_mb": round(infer_peak, 1),
             "train_mem_increase_mb": round(train_peak - train_base, 2),
             "infer_mem_increase_mb": round(infer_peak - infer_base, 2),
+            "deploy_rss_before_load_mb": round(deploy["rss_before_load_mb"], 1),
+            "deploy_model_load_mb": round(deploy["rss_after_load_mb"] - deploy["rss_before_load_mb"], 2),
+            "deploy_peak_rss_mb": round(deploy["peak_rss_mb"], 1),
         }
         rows.append(row)
         raw[name] = {"train_times_s": train_times, "infer_times_s": infer_times}
