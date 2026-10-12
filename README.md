@@ -3,6 +3,12 @@
 Lab work for the Machine Learning Systems course.
 Textbook: Vijay Janapa Reddi, *Introduction to Machine Learning Systems*.
 
+## Labs
+
+| Lab | Topic | Report |
+|---|---|---|
+| 01 | Environment and first system measurements | [lab01/report.md](lab01/report.md) |
+
 ## Repository layout
 
 ```
@@ -25,7 +31,7 @@ Datasets are downloaded by the scripts into `data/` (git-ignored).
 
 ## Environment setup
 
-Python 3.11.8 in an isolated virtual environment:
+Python 3.11.8 (also pinned in `.python-version`) in an isolated virtual environment:
 
 ```bash
 python3.11 -m venv .venv
